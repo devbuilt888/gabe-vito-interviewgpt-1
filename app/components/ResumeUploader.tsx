@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import Chat from "./Chat";
+import AudioChat from "./AudioChat";
 
 const ResumeUploader = () => {
   const [showChat, setShowChat] = useState(false);
@@ -23,7 +23,7 @@ const ResumeUploader = () => {
     try {
       const response = await fetch("/api/extract-text", {
         method: "POST",
-        body: formData, // Send the file in a FormData
+        body: formData,
       });
 
       if (!response.ok) {
@@ -46,7 +46,7 @@ const ResumeUploader = () => {
       <p className="instructions-text">
         {!showChat
           ? "Upload your resume to start the interview."
-          : "Answer Bob's questions."}
+          : "Answer Bob's questions using your microphone."}
       </p>
       {!showChat ? (
         <>
@@ -65,7 +65,7 @@ const ResumeUploader = () => {
           {isLoading && <div className="loading-spinner"></div>}
         </>
       ) : (
-        <Chat initialText={initialText} />
+        <AudioChat initialText={initialText} />
       )}
     </div>
   );

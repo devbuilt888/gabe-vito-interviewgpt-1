@@ -9,6 +9,8 @@
     "lint": "next lint"
   },
   "dependencies": {
+    "@livekit/components-react": "^2.8.1",
+    "@livekit/components-styles": "^1.1.4",
     "@types/formidable": "^3.4.5",
     "@types/node": "20.5.1",
     "@types/react": "18.2.20",
@@ -21,6 +23,8 @@
     "eslint-config-next": "13.4.19",
     "formidable": "^3.5.1",
     "fs": "^0.0.1-security",
+    "livekit-client": "^2.9.8",
+    "livekit-server-sdk": "^2.10.2",
     "next": "13.4.19",
     "openai": "^4.24.2",
     "pdfjs-dist": "^4.0.379",

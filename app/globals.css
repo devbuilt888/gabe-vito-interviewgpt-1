@@ -91,3 +91,118 @@ h1 {
 .react-chat-viewerBox {
   border-radius: 10px;
 }
+
+.audio-chat-container {
+  display: flex;
+  flex-direction: column;
+  height: 500px;
+  width: 550px;
+  margin: auto;
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  overflow: hidden;
+}
+
+.messages-container {
+  flex: 1;
+  overflow-y: auto;
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.message {
+  padding: 10px 15px;
+  border-radius: 8px;
+  max-width: 80%;
+}
+
+.message.system {
+  background-color: #f0f0f0;
+  align-self: flex-start;
+}
+
+.message.user {
+  background-color: #007bff;
+  color: white;
+  align-self: flex-end;
+}
+
+.controls-container {
+  padding: 15px;
+  border-top: 1px solid #eee;
+  background: #f8f9fa;
+}
+
+/* LiveKit specific styles */
+.lk-control-bar {
+  background: transparent !important;
+  border: none !important;
+}
+
+.lk-button {
+  background: #007bff !important;
+  color: white !important;
+  border: none !important;
+  border-radius: 4px !important;
+  padding: 8px 16px !important;
+  cursor: pointer !important;
+}
+
+.lk-button:hover {
+  background: #0056b3 !important;
+}
+
+.lk-button[data-lk-muted="true"] {
+  background: #dc3545 !important;
+}
+
+.error-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 500px;
+  width: 550px;
+  margin: auto;
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  padding: 20px;
+  text-align: center;
+}
+
+.error-container p {
+  color: #dc3545;
+  margin-bottom: 20px;
+}
+
+.error-container button {
+  background: #007bff;
+  color: white;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 16px;
+}
+
+.error-container button:hover {
+  background: #0056b3;
+}
+
+.loading-container {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 500px;
+  width: 550px;
+  margin: auto;
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  font-size: 18px;
+  color: #666;
+}
