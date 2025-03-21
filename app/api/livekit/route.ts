@@ -43,7 +43,6 @@ export async function POST(req: Request) {
     const at = new AccessToken(apiKey, apiSecret, {
       identity: participantName,
       name: participantName,
-      metadata: JSON.stringify({ roomName }),
     });
 
     at.addGrant({
@@ -55,7 +54,7 @@ export async function POST(req: Request) {
     });
 
     const token = at.toJwt();
-    console.log('Token generated successfully:', {
+    console.log('Token generated successfully for:', {
       roomName,
       participantName
     });
