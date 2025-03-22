@@ -1,34 +1,36 @@
+import { execFile } from 'child_process';
+import { promisify } from 'util';
+import path from 'path';
 import say from 'say';
 
 // Queue to store pending text chunks
 let textQueue: string[] = [];
 let isSpeaking = false;
 
-// Function to speak text using the say package
-const speakText = (text: string): Promise<void> => {
-  return new Promise((resolve, reject) => {
-    console.log('Starting to speak:', text);
-    
-    // Calculate approximate duration based on word count and speaking rate
-    // Assuming average speaking rate of 150 words per minute
-    const words = text.split(' ').length;
-    const durationMs = (words / 150) * 60 * 1000; // Convert to milliseconds
-    
-    say.speak(text, undefined, 1.0, (err) => {
-      if (err) {
-        console.error('Error speaking text:', err);
-        reject(err);
-        return;
-      }
-    });
+// Function to speak text using say
+async function speakText(text: string): Promise<void> {
+  try {
+    console.log('Starting text-to-speech with text:', text);
+    console.log('Text length:', text.length, 'characters,', text.split(' ').length, 'words');
 
-    // Wait for the calculated duration plus a small buffer before resolving
-    setTimeout(() => {
-      console.log('Finished speaking chunk');
-      resolve();
-    }, durationMs + 2000); // Add 2 seconds buffer
-  });
-};
+    // Return a promise that resolves when the speech is complete
+    return new Promise((resolve, reject) => {
+      say.speak(text, undefined, 1.0, (err) => {
+        if (err) {
+          console.error('Error in text-to-speech:', err);
+          reject(err);
+        } else {
+          console.log('Finished speaking chunk');
+          console.log('Text-to-speech completed successfully');
+          resolve();
+        }
+      });
+    });
+  } catch (error) {
+    console.error('Error in text-to-speech:', error);
+    throw error;
+  }
+}
 
 // Function to process the text queue
 async function processQueue() {
@@ -55,40 +57,24 @@ function queueText(text: string) {
 // Main function to start speaking
 async function main() {
   try {
-    // Get all command line arguments after the script name and join them
+    console.log('Starting interview agent...');
+    
+    // Get command line arguments
     const args = process.argv.slice(2);
     console.log('Received arguments:', args);
-    
-    const text = args.join(' ');
-    if (!text) {
-      throw new Error('No text provided to speak');
+
+    if (args.length > 0) {
+      const text = args[0];
+      await speakText(text);
     }
-    
-    console.log('Starting text-to-speech with text:', text);
-    console.log('Text length:', text.length, 'characters,', text.split(' ').length, 'words');
-    
-    // Add the text to the queue and wait for completion
-    queueText(text);
-    
-    // Wait for the queue to be processed
-    while (textQueue.length > 0 || isSpeaking) {
-      await new Promise(resolve => setTimeout(resolve, 100));
-    }
-    
-    console.log('Text-to-speech completed successfully');
-    
-    // Add a small delay before exiting to ensure audio is fully played
-    await new Promise(resolve => setTimeout(resolve, 1000));
-    process.exit(0);
   } catch (error) {
-    console.error('Error in text-to-speech:', error);
+    console.error('Error in interview agent:', error);
     process.exit(1);
   }
 }
 
 // Run the main function if this is the main module
 if (require.main === module) {
-  console.log('Starting interview agent...');
   main().catch((error) => {
     console.error('Unhandled error:', error);
     process.exit(1);
@@ -96,4 +82,7 @@ if (require.main === module) {
 }
 
 // Export the queueText function for external use
-export { queueText }; 
+export { queueText };
+
+// Export the speakText function for external use
+export { speakText }; 

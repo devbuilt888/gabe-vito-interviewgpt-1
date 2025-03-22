@@ -59,7 +59,7 @@ const ResumeUploader = () => {
               hidden
             />
             <label htmlFor="file-upload" className="file-upload-btn">
-              ⚡️ Upload Resume
+              📄 Upload Resume
             </label>
           </div>
           {isLoading && <div className="loading-spinner"></div>}

@@ -7,6 +7,7 @@ import {
 } from '@livekit/components-react';
 import '@livekit/components-styles';
 import { useChat } from 'ai/react';
+import BackgroundAnimation from './BackgroundAnimation';
 
 type AudioChatProps = {
   initialText?: string;
@@ -21,6 +22,7 @@ const AudioChat: React.FC<AudioChatProps> = ({ initialText }) => {
   const [isRecording, setIsRecording] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
   const [messages, setMessages] = useState<Array<{ role: string; content: string }>>([]);
+  const [isUIReady, setIsUIReady] = useState(false);
   
   // Use the useChat hook for better message handling
   const { append, messages: chatMessages } = useChat({
@@ -42,17 +44,31 @@ const AudioChat: React.FC<AudioChatProps> = ({ initialText }) => {
   // Function to send text to speech
   const speakText = async (text: string) => {
     try {
-      const response = await fetch('/api/speak', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ text }),
-      });
+      // Create a new SpeechSynthesisUtterance
+      const utterance = new SpeechSynthesisUtterance(text);
+      
+      // Set some properties for better speech
+      utterance.rate = 1.0;  // Speed of speech
+      utterance.pitch = 1.0; // Pitch of voice
+      utterance.volume = 1.0; // Volume
 
-      if (!response.ok) {
-        throw new Error('Failed to speak text');
-      }
+      // Return a promise that resolves when the speech is complete
+      return new Promise<void>((resolve, reject) => {
+        utterance.onend = () => {
+          console.log('Finished speaking chunk');
+          console.log('Text-to-speech completed successfully');
+          resolve();
+        };
+
+        utterance.onerror = (error) => {
+          console.error('Error in text-to-speech:', error);
+          reject(error);
+        };
+
+        // Start speaking
+        console.log('Starting to speak:', text);
+        window.speechSynthesis.speak(utterance);
+      });
     } catch (error) {
       console.error('Error in text-to-speech:', error);
     }
@@ -122,12 +138,11 @@ const AudioChat: React.FC<AudioChatProps> = ({ initialText }) => {
         setToken(data.token);
         setWsUrl(data.wsUrl);
         setIsConnected(true);
+        setIsUIReady(true); // Mark UI as ready after connection is established
 
-        // Wait a short moment to ensure UI is loaded before sending initial message
-        setTimeout(async () => {
-          const initialMessage = initialText ?? 'Hello, I am Bob the Interviewer. How can I help you?';
-          await sendMessageToOpenAI(initialMessage, 'system');
-        }, 1000);
+        // Send initial message after UI is ready
+        const initialMessage = initialText ?? 'Hello, I am Bob the Interviewer. How can I help you?';
+        await sendMessageToOpenAI(initialMessage, 'system');
       } catch (err) {
         console.error('Error setting up room:', err);
         setError(err instanceof Error ? err.message : 'Failed to connect to interview room');
@@ -222,67 +237,70 @@ const AudioChat: React.FC<AudioChatProps> = ({ initialText }) => {
   }
 
   return (
-    <div className="audio-chat-container">
-      <LiveKitRoom
-        token={token}
-        serverUrl={wsUrl}
-        connect={true}
-        onConnected={() => {
-          console.log('Connected to LiveKit room:', roomName);
-        }}
-        onDisconnected={() => {
-          console.log('Disconnected from LiveKit room:', roomName);
-        }}
-        onError={(error) => {
-          console.error('LiveKit room error:', error);
-          setError(error.message);
-        }}
-      >
-        <div className="chat-layout">
-          <div className="chat-header">
-            <h2>Interview with Bob</h2>
-            <div className="status-indicator">
-              <span className={`status-dot ${isConnected ? 'connected' : 'disconnected'}`}></span>
-              {isConnected ? 'Connected' : 'Disconnected'}
+    <>
+      <BackgroundAnimation />
+      <div className="audio-chat-container">
+        <LiveKitRoom
+          token={token}
+          serverUrl={wsUrl}
+          connect={true}
+          onConnected={() => {
+            console.log('Connected to LiveKit room:', roomName);
+          }}
+          onDisconnected={() => {
+            console.log('Disconnected from LiveKit room:', roomName);
+          }}
+          onError={(error) => {
+            console.error('LiveKit room error:', error);
+            setError(error.message);
+          }}
+        >
+          <div className="chat-layout">
+            <div className="chat-header">
+              <h2>Interview with Bob</h2>
+              <div className="status-indicator">
+                <span className={`status-dot ${isConnected ? 'connected' : 'disconnected'}`}></span>
+                {isConnected ? 'Connected' : 'Disconnected'}
+              </div>
+            </div>
+
+            <div className="messages-container">
+              {messages.map((message, index) => (
+                <div key={index} className={`message-wrapper ${message.role === 'user' ? 'user-message' : 'bob-message'}`}>
+                  <div className="message-content">
+                    <div className="message-sender">
+                      {message.role === 'system' || message.role === 'assistant' ? 'Bob' : 'You'}
+                    </div>
+                    <div className="message-text">{message.content}</div>
+                  </div>
+                  <div className="message-timestamp">
+                    {new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                  </div>
+                </div>
+              ))}
+              <div ref={messagesEndRef} />
+            </div>
+
+            <div className="chat-controls">
+              <button 
+                className={`record-button ${isRecording ? 'recording' : ''} ${isProcessing ? 'processing' : ''}`}
+                onClick={toggleRecording}
+                disabled={isProcessing}
+              >
+                <span className="button-icon">
+                  {isRecording ? '⏹' : isProcessing ? '⌛' : '🎤'}
+                </span>
+                <span className="button-text">
+                  {isProcessing ? 'Processing...' : isRecording ? 'Stop Recording' : 'Start Recording'}
+                </span>
+              </button>
             </div>
           </div>
 
-          <div className="messages-container">
-            {messages.map((message, index) => (
-              <div key={index} className={`message-wrapper ${message.role === 'user' ? 'user-message' : 'bob-message'}`}>
-                <div className="message-content">
-                  <div className="message-sender">
-                    {message.role === 'system' || message.role === 'assistant' ? 'Bob' : 'You'}
-                  </div>
-                  <div className="message-text">{message.content}</div>
-                </div>
-                <div className="message-timestamp">
-                  {new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                </div>
-              </div>
-            ))}
-            <div ref={messagesEndRef} />
-          </div>
-
-          <div className="chat-controls">
-            <button 
-              className={`record-button ${isRecording ? 'recording' : ''} ${isProcessing ? 'processing' : ''}`}
-              onClick={toggleRecording}
-              disabled={isProcessing}
-            >
-              <span className="button-icon">
-                {isRecording ? '⏹' : isProcessing ? '⌛' : '🎤'}
-              </span>
-              <span className="button-text">
-                {isProcessing ? 'Processing...' : isRecording ? 'Stop Recording' : 'Start Recording'}
-              </span>
-            </button>
-          </div>
-        </div>
-
-        <RoomAudioRenderer />
-      </LiveKitRoom>
-    </div>
+          <RoomAudioRenderer />
+        </LiveKitRoom>
+      </div>
+    </>
   );
 };
 
