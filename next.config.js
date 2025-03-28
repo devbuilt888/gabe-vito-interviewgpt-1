@@ -1,50 +1,43 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  reactStrictMode: true,
   webpack: (config, { isServer }) => {
-    // Add a rule to handle canvas.node
+    // Handle node modules
+    config.resolve.fallback = {
+      ...config.resolve.fallback,
+      fs: false,
+      net: false,
+      tls: false,
+      encoding: false,
+      canvas: false,
+    };
+
+    // Handle .node files
     config.module.rules.push({
       test: /\.node$/,
       use: 'node-loader',
     });
 
-    // Add a rule to handle canvas
+    // Handle Three.js
     config.module.rules.push({
-      test: /canvas/,
+      test: /three\/examples\/jsm/,
       use: 'null-loader',
     });
-
-    // Add a rule to handle three.js
-    config.module.rules.push({
-      test: /three/,
-      use: 'null-loader',
-    });
-
-    // Add fallback for node-fetch
-    config.resolve.fallback = {
-      ...config.resolve.fallback,
-      encoding: false,
-    };
 
     return config;
   },
-  // Disable image optimization for Netlify
-  images: {
-    unoptimized: true,
-  },
-  // Add transpilePackages for three.js
-  transpilePackages: ['three'],
-  // Add experimental features
   experimental: {
-    serverActions: true,
+    esmExternals: 'loose',
   },
-  // Add typescript configuration
   typescript: {
     ignoreBuildErrors: true,
   },
-  // Add eslint configuration
   eslint: {
     ignoreDuringBuilds: true,
   },
-};
+  images: {
+    unoptimized: true,
+  },
+}
 
 module.exports = nextConfig

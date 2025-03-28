@@ -27,7 +27,7 @@
     "fs": "^0.0.1-security",
     "livekit-client": "^2.9.8",
     "livekit-server-sdk": "^2.10.2",
-    "next": "13.4.19",
+    "next": "^15.2.4",
     "openai": "^4.24.2",
     "pdfjs-dist": "^4.0.379",
     "postcss": "8.4.28",

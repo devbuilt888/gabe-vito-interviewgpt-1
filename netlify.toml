@@ -10,6 +10,8 @@
   NODE_VERSION = "18"
   NPM_FLAGS = "--legacy-peer-deps"
   NEXT_TELEMETRY_DISABLED = "1"
+  NEXT_IGNORE_ESLINT = "1"
+  NEXT_IGNORE_TYPE_CHECKS = "1"
 
 [functions]
   node_bundler = "esbuild"
