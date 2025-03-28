@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState, useRef } from 'react';
+import Image from 'next/image';
 import {
   LiveKitRoom,
   RoomAudioRenderer,
@@ -13,6 +14,43 @@ type AudioChatProps = {
   initialText?: string;
 };
 
+const TypeWriter = ({ text }: { text: string }) => {
+  const [displayedText, setDisplayedText] = useState("");
+  const intervalRef = useRef<number | null>(null);
+
+  useEffect(() => {
+    setDisplayedText(""); // Reset text when prop changes
+    let currentText = "";
+    let currentIndex = 0;
+
+    const streamText = () => {
+      if (currentIndex < text.length) {
+        currentText += text[currentIndex];
+        setDisplayedText(currentText);
+        currentIndex++;
+      } else {
+        if (intervalRef.current) {
+          window.clearInterval(intervalRef.current);
+        }
+      }
+    };
+
+    intervalRef.current = window.setInterval(streamText, 50);
+
+    return () => {
+      if (intervalRef.current) {
+        window.clearInterval(intervalRef.current);
+      }
+    };
+  }, [text]);
+
+  return (
+    <h2 className="typewriter-text">
+      {displayedText}
+    </h2>
+  );
+};
+
 const AudioChat: React.FC<AudioChatProps> = ({ initialText }) => {
   const [isConnected, setIsConnected] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -23,12 +61,27 @@ const AudioChat: React.FC<AudioChatProps> = ({ initialText }) => {
   const [isProcessing, setIsProcessing] = useState(false);
   const [messages, setMessages] = useState<Array<{ role: string; content: string }>>([]);
   const [isUIReady, setIsUIReady] = useState(false);
-  
+  const [isInterviewComplete, setIsInterviewComplete] = useState(false);
+
   // Use the useChat hook for better message handling
   const { append, messages: chatMessages } = useChat({
     api: '/api/openai-gpt',
+    onFinish: (message) => {
+      // Only speak the complete message when it's fully received
+      if (message.role === 'assistant') {
+        speakText(message.content).catch(console.error);
+
+        // Check if this is the final message (contains the goodbye message)
+        // Look for the key phrases that indicate the interview is complete
+        if (message.content.includes('Thank you for your time') &&
+          message.content.includes('have a great day')
+        ) {
+          setIsInterviewComplete(true);
+        }
+      }
+    }
   });
-  
+
   // MediaRecorder setup
   const mediaRecorder = useRef<MediaRecorder | null>(null);
   const audioChunks = useRef<Blob[]>([]);
@@ -46,7 +99,7 @@ const AudioChat: React.FC<AudioChatProps> = ({ initialText }) => {
     try {
       // Create a new SpeechSynthesisUtterance
       const utterance = new SpeechSynthesisUtterance(text);
-      
+
       // Set some properties for better speech
       utterance.rate = 1.0;  // Speed of speech
       utterance.pitch = 1.0; // Pitch of voice
@@ -99,6 +152,9 @@ const AudioChat: React.FC<AudioChatProps> = ({ initialText }) => {
   useEffect(() => {
     if (chatMessages.length > 0) {
       setMessages(chatMessages);
+
+      // We no longer trigger speech here since we're using onFinish
+      // The UI will still update progressively with the stream
     }
   }, [chatMessages]);
 
@@ -126,7 +182,7 @@ const AudioChat: React.FC<AudioChatProps> = ({ initialText }) => {
 
         const data = await response.json();
         console.log('API Response:', data);
-        
+
         if (!data.token || typeof data.token !== 'string') {
           throw new Error('Invalid token received from server');
         }
@@ -233,7 +289,26 @@ const AudioChat: React.FC<AudioChatProps> = ({ initialText }) => {
   }
 
   if (!isConnected || !token || !roomName || !wsUrl) {
-    return <div className="loading-container">Connecting to interview room...</div>;
+    return (
+      <div className="loading-container">
+        <div className="loading-message">
+          <div className="robot-image-container">
+            <Image
+              src="/MegaRobotInterviewer.png"
+              alt="Robot Interviewer"
+              width={480}
+              height={480}
+              priority
+            />
+          </div>
+          <div className="loading-text">
+            <TypeWriter text="Hello! I'm your interviewer today. I'll be reviewing your resume and asking you some questions." />
+            <h3>Connecting to interview room...</h3>
+            <div className="loading-spinner"></div>
+          </div>
+        </div>
+      </div>
+    );
   }
 
   return (
@@ -282,18 +357,27 @@ const AudioChat: React.FC<AudioChatProps> = ({ initialText }) => {
             </div>
 
             <div className="chat-controls">
-              <button 
-                className={`record-button ${isRecording ? 'recording' : ''} ${isProcessing ? 'processing' : ''}`}
+              <button
+                className={`record-button ${isRecording ? 'recording' : ''} ${isProcessing ? 'processing' : ''} ${isInterviewComplete ? 'interview-complete' : ''}`}
                 onClick={toggleRecording}
-                disabled={isProcessing}
+                disabled={isProcessing || isInterviewComplete}
               >
                 <span className="button-icon">
-                  {isRecording ? '⏹' : isProcessing ? '⌛' : '🎤'}
+                  {isRecording ? '⏹' : isProcessing ? '⌛' : isInterviewComplete ? '✅' : '🎤'}
                 </span>
                 <span className="button-text">
-                  {isProcessing ? 'Processing...' : isRecording ? 'Stop Recording' : 'Start Recording'}
+                  {isProcessing ? 'Processing...' : isRecording ? 'Stop Recording' : isInterviewComplete ? 'Interview Complete' : 'Start Recording'}
                 </span>
               </button>
+              {isInterviewComplete && (
+                <button
+                  className="new-interview-button"
+                  onClick={() => window.location.reload()}
+                >
+                  <span className="button-icon">🔄</span>
+                  <span className="button-text">Start New Interview</span>
+                </button>
+              )}
             </div>
           </div>
 
