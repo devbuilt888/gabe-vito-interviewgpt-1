@@ -3,6 +3,9 @@ import * as pdfjs from 'pdfjs-dist/build/pdf.min.mjs';
 import type { TextContent, TextItem } from 'pdfjs-dist/types/src/display/api';
 import { NextResponse, NextRequest } from 'next/server';
 
+// Set up PDF.js worker
+pdfjs.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjs.version}/pdf.worker.min.js`;
+
 function mergeTextContent(textContent: TextContent) {
   return textContent.items.map(item => {
     const { str, hasEOL } = item as TextItem
@@ -11,41 +14,46 @@ function mergeTextContent(textContent: TextContent) {
 }
 
 async function fetchOpenAIResponse(extractedText: string) {
-  const response = await fetch('/api/openai-gpt', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({ messages: [{role: 'user', content: `Here is my resume:
+  try {
+    const response = await fetch('/api/openai-gpt', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ messages: [{role: 'user', content: `Here is my resume:
 ------
 ${extractedText}` }]}),
-  });
+    });
 
-  if (!response.ok) {
-    throw new Error('Failed to fetch OpenAI response');
-  }
-
-  const reader = response.body?.getReader();
-  if (!reader) {
-    throw new Error('No response body');
-  }
-
-  let chunks = [];
-
-  // Read the stream
-  while (true) {
-    const { done, value } = await reader.read();
-    if (done) {
-      break;
+    if (!response.ok) {
+      throw new Error('Failed to fetch OpenAI response');
     }
-    chunks.push(value);
+
+    const reader = response.body?.getReader();
+    if (!reader) {
+      throw new Error('No response body');
+    }
+
+    let chunks = [];
+
+    // Read the stream
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) {
+        break;
+      }
+      chunks.push(value);
+    }
+
+    // Convert the Uint8Array chunks to string
+    const decoder = new TextDecoder('utf-8');
+    const text = chunks.map(chunk => decoder.decode(chunk)).join('');
+
+    return text;
+  } catch (error) {
+    console.error('Error in fetchOpenAIResponse:', error);
+    throw error;
   }
-
-  // Convert the Uint8Array chunks to string
-  const decoder = new TextDecoder('utf-8');
-  const text = chunks.map(chunk => decoder.decode(chunk)).join('');
-
-  return text;
 }
 
 export async function POST(req: NextRequest, res: NextResponse) {
@@ -65,11 +73,10 @@ export async function POST(req: NextRequest, res: NextResponse) {
       });
     }
 
+    console.log('Processing file:', file.name, 'Size:', file.size);
+
     const fileBuffer = await file.arrayBuffer();
     const fileData = new Uint8Array(fileBuffer);
-
-    // Initialize pdf.js
-    await import('pdfjs-dist/build/pdf.worker.mjs');
 
     // Load the PDF from the buffer
     const loadingTask = pdfjs.getDocument({ data: fileData });
@@ -87,6 +94,8 @@ export async function POST(req: NextRequest, res: NextResponse) {
     const textContent = await page.getTextContent();
     const extractedText = mergeTextContent(textContent);
 
+    console.log('Extracted text length:', extractedText.length);
+
     // Send extracted resume text to openAI API to get the first question from the AI
     const openAIResponse = await fetchOpenAIResponse(extractedText);
 
@@ -97,7 +106,11 @@ export async function POST(req: NextRequest, res: NextResponse) {
     });
   } catch (err) {
     console.error('Error in extract-text:', err);
-    return new Response(JSON.stringify({ status: 'error', error: String(err) }), {
+    return new Response(JSON.stringify({ 
+      status: 'error', 
+      error: String(err),
+      stack: err instanceof Error ? err.stack : undefined
+    }), {
       status: 500,
       headers: {
         'Content-Type': 'application/json',

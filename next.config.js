@@ -10,6 +10,13 @@ const nextConfig = {
       tls: false,
       encoding: false,
       canvas: false,
+      path: false,
+      stream: false,
+      zlib: false,
+      http: false,
+      https: false,
+      crypto: false,
+      buffer: false,
     };
 
     // Handle .node files
@@ -22,6 +29,15 @@ const nextConfig = {
     config.module.rules.push({
       test: /three\/examples\/jsm/,
       use: 'null-loader',
+    });
+
+    // Handle PDF.js worker
+    config.module.rules.push({
+      test: /pdf\.worker\.(min\.)?js/,
+      type: 'asset/resource',
+      generator: {
+        filename: 'static/worker/[hash][ext][query]',
+      },
     });
 
     return config;
@@ -38,6 +54,12 @@ const nextConfig = {
   images: {
     unoptimized: true,
   },
+  // Disable Vercel Analytics
+  analytics: false,
+  // Add Netlify-specific configuration
+  poweredByHeader: false,
+  compress: true,
+  generateEtags: true,
 }
 
 module.exports = nextConfig

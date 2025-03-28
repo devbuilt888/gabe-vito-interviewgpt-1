@@ -17,7 +17,6 @@
     "@types/react": "18.2.20",
     "@types/react-dom": "18.2.7",
     "@types/three": "^0.174.0",
-    "@vercel/analytics": "^1.2.2",
     "ai": "^2.2.31",
     "autoprefixer": "10.4.15",
     "canvas": "^3.1.0",
