@@ -11,7 +11,7 @@ function mergeTextContent(textContent: TextContent) {
 }
 
 async function fetchOpenAIResponse(extractedText: string) {
-  const response = await fetch('http://localhost:3000/api/openai-gpt', {
+  const response = await fetch('/api/openai-gpt', {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
@@ -21,11 +21,15 @@ async function fetchOpenAIResponse(extractedText: string) {
 ${extractedText}` }]}),
   });
 
-  if (!response.body) {
+  if (!response.ok) {
+    throw new Error('Failed to fetch OpenAI response');
+  }
+
+  const reader = response.body?.getReader();
+  if (!reader) {
     throw new Error('No response body');
   }
 
-  const reader = response.body.getReader();
   let chunks = [];
 
   // Read the stream
@@ -92,6 +96,7 @@ export async function POST(req: NextRequest, res: NextResponse) {
       },
     });
   } catch (err) {
+    console.error('Error in extract-text:', err);
     return new Response(JSON.stringify({ status: 'error', error: String(err) }), {
       status: 500,
       headers: {
