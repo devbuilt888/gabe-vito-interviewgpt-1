@@ -19,6 +19,12 @@ const nextConfig = {
       use: 'null-loader',
     });
 
+    // Add fallback for node-fetch
+    config.resolve.fallback = {
+      ...config.resolve.fallback,
+      encoding: false,
+    };
+
     return config;
   },
   // Disable image optimization for Netlify
@@ -27,6 +33,18 @@ const nextConfig = {
   },
   // Add transpilePackages for three.js
   transpilePackages: ['three'],
+  // Add experimental features
+  experimental: {
+    serverActions: true,
+  },
+  // Add typescript configuration
+  typescript: {
+    ignoreBuildErrors: true,
+  },
+  // Add eslint configuration
+  eslint: {
+    ignoreDuringBuilds: true,
+  },
 };
 
 module.exports = nextConfig

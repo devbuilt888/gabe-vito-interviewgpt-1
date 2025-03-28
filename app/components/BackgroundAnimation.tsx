@@ -1,15 +1,31 @@
 import { useEffect, useRef } from 'react';
-import * as THREE from 'three';
+import {
+  WebGLRenderer,
+  PerspectiveCamera,
+  Scene,
+  AmbientLight,
+  DirectionalLight,
+  PointLight,
+  FogExp2,
+  BoxGeometry,
+  IcosahedronGeometry,
+  OctahedronGeometry,
+  TetrahedronGeometry,
+  MeshPhysicalMaterial,
+  Mesh,
+  Sphere,
+  Vector3
+} from 'three';
 
 const BackgroundAnimation = () => {
   const containerRef = useRef<HTMLDivElement>(null);
-  const rendererRef = useRef<THREE.WebGLRenderer | null>(null);
-  const sceneRef = useRef<THREE.Scene | null>(null);
-  const cameraRef = useRef<THREE.PerspectiveCamera | null>(null);
-  const cubesRef = useRef<THREE.Mesh[]>([]);
+  const rendererRef = useRef<WebGLRenderer | null>(null);
+  const sceneRef = useRef<Scene | null>(null);
+  const cameraRef = useRef<PerspectiveCamera | null>(null);
+  const cubesRef = useRef<Mesh[]>([]);
   const velocitiesRef = useRef<{ x: number; y: number; z: number }[]>([]);
   const timeRef = useRef<number>(0);
-  const boundingSpheresRef = useRef<THREE.Sphere[]>([]);
+  const boundingSpheresRef = useRef<Sphere[]>([]);
 
   useEffect(() => {
     if (!containerRef.current) return;
@@ -30,7 +46,7 @@ const BackgroundAnimation = () => {
 
     // Setup
     const container = containerRef.current;
-    const renderer = new THREE.WebGLRenderer({ 
+    const renderer = new WebGLRenderer({ 
       antialias: true,
       alpha: true 
     });
@@ -44,40 +60,40 @@ const BackgroundAnimation = () => {
     const aspect = container.clientWidth / container.clientHeight;
     const near = 0.1;
     const far = 1000;
-    const camera = new THREE.PerspectiveCamera(fov, aspect, near, far);
+    const camera = new PerspectiveCamera(fov, aspect, near, far);
     camera.position.z = 8;
     cameraRef.current = camera;
 
     // Scene
-    const scene = new THREE.Scene();
+    const scene = new Scene();
     sceneRef.current = scene;
 
     // Lighting
-    const ambientLight = new THREE.AmbientLight(0xffffff, 0.5);
+    const ambientLight = new AmbientLight(0xffffff, 0.5);
     scene.add(ambientLight);
 
-    const directionalLight = new THREE.DirectionalLight(0xffffff, 1);
+    const directionalLight = new DirectionalLight(0xffffff, 1);
     directionalLight.position.set(5, 5, 5);
     scene.add(directionalLight);
 
     // Add point lights for more subtle lighting
-    const pointLight1 = new THREE.PointLight(0x0072ff, 1.5, 20); // Reduced intensity, increased distance
+    const pointLight1 = new PointLight(0x0072ff, 1.5, 20); // Reduced intensity, increased distance
     pointLight1.position.set(-5, 3, 5);
     scene.add(pointLight1);
 
-    const pointLight2 = new THREE.PointLight(0x8159ff, 1.5, 20); // Reduced intensity, increased distance
+    const pointLight2 = new PointLight(0x8159ff, 1.5, 20); // Reduced intensity, increased distance
     pointLight2.position.set(5, -3, 5);
     scene.add(pointLight2);
 
     // Create a subtle fog
-    scene.fog = new THREE.FogExp2(0x090d19, 0.03);
+    scene.fog = new FogExp2(0x090d19, 0.03);
 
     // Create cubes with modern materials
     const geometryOptions = [
-      new THREE.BoxGeometry(1, 1, 1),
-      new THREE.IcosahedronGeometry(0.8, 0),
-      new THREE.OctahedronGeometry(0.8),
-      new THREE.TetrahedronGeometry(0.9)
+      new BoxGeometry(1, 1, 1),
+      new IcosahedronGeometry(0.8, 0),
+      new OctahedronGeometry(0.8),
+      new TetrahedronGeometry(0.9)
     ];
 
     // Modern tech-inspired colors
@@ -99,7 +115,7 @@ const BackgroundAnimation = () => {
       const geometry = geometryOptions[Math.floor(Math.random() * geometryOptions.length)];
       
       // Create glassy material
-      const material = new THREE.MeshPhysicalMaterial({ 
+      const material = new MeshPhysicalMaterial({ 
         color: colors[i % colors.length],
         transparent: true,
         opacity: 0.6,
@@ -110,7 +126,7 @@ const BackgroundAnimation = () => {
         wireframe: Math.random() > 0.9, // Reduce wireframe probability
       });
       
-      const cube = new THREE.Mesh(geometry, material);
+      const cube = new Mesh(geometry, material);
       
       // Random size
       const scale = 0.5 + Math.random() * 0.7;
@@ -123,8 +139,8 @@ const BackgroundAnimation = () => {
       
       // Create a bounding sphere for collision detection
       // Size the bounding sphere based on the object's scale
-      const boundingSphere = new THREE.Sphere(
-        cube.position.clone(),
+      const boundingSphere = new Sphere(
+        new Vector3(cube.position.x, cube.position.y, cube.position.z),
         scale * 0.8 // Slightly smaller than the visual size for better visual collisions
       );
       boundingSpheresRef.current.push(boundingSphere);
@@ -207,13 +223,13 @@ const BackgroundAnimation = () => {
             const vel2 = velocitiesRef.current[j];
             
             // Calculate collision normal
-            const normal = new THREE.Vector3()
+            const normal = new Vector3()
               .subVectors(sphere2.center, sphere1.center)
               .normalize();
             
             // Apply impulse-based collision response
             // Calculate relative velocity
-            const relativeVelocity = new THREE.Vector3(
+            const relativeVelocity = new Vector3(
               vel2.x - vel1.x,
               vel2.y - vel1.y,
               vel2.z - vel1.z
