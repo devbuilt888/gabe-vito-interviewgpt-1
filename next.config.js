@@ -40,12 +40,6 @@ const nextConfig = {
       },
     });
 
-    // Add rule for PDF.js
-    config.module.rules.push({
-      test: /pdfjs-dist/,
-      use: 'null-loader',
-    });
-
     return config;
   },
   experimental: {
@@ -62,12 +56,11 @@ const nextConfig = {
   images: {
     unoptimized: true,
   },
-  // Disable Vercel Analytics
-  analytics: false,
   // Add Netlify-specific configuration
   poweredByHeader: false,
   compress: true,
   generateEtags: true,
+  output: 'standalone',
 }
 
 module.exports = nextConfig

@@ -1,10 +1,10 @@
 // import formidable from "formidable";
-import * as pdfjs from 'pdfjs-dist';
+import { NextResponse } from 'next/server';
+import { getDocument } from 'pdfjs-dist';
 import type { TextContent, TextItem } from 'pdfjs-dist/types/src/display/api';
-import { NextResponse, NextRequest } from 'next/server';
 
 // Initialize worker
-pdfjs.GlobalWorkerOptions.workerSrc = `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjs.version}/pdf.worker.min.js`;
+GlobalWorkerOptions.workerSrc = `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/${version}/pdf.worker.min.js`;
 
 export const runtime = 'edge';
 export const maxDuration = 60;
@@ -71,7 +71,7 @@ export async function POST(req: Request) {
     const buffer = await file.arrayBuffer();
     const uint8Array = new Uint8Array(buffer);
 
-    const loadingTask = pdfjs.getDocument({ data: uint8Array });
+    const loadingTask = getDocument({ data: uint8Array });
     const pdf = await loadingTask.promise;
 
     let fullText = '';
