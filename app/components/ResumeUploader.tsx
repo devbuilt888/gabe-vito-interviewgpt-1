@@ -6,6 +6,7 @@ const ResumeUploader = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [initialText, setInitialText] = useState("");
   const [isDragging, setIsDragging] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Add a class to body when chat is shown
@@ -25,9 +26,11 @@ const ResumeUploader = () => {
     event: React.ChangeEvent<HTMLInputElement>
   ) => {
     setIsLoading(true);
+    setError(null);
     const file = event.target.files?.[0];
     if (!file) {
       console.error("No file selected");
+      setError("No file selected");
       setIsLoading(false);
       return;
     }
@@ -38,29 +41,41 @@ const ResumeUploader = () => {
   const processFile = async (file: File) => {
     if (file.type !== "application/pdf") {
       alert("Please upload a PDF file");
+      setError("Please upload a PDF file");
       setIsLoading(false);
       return;
     }
+
+    console.log('Processing file:', file.name, 'Size:', file.size);
 
     const formData = new FormData();
     formData.append("file", file);
     
     try {
+      console.log('Sending file to server');
       const response = await fetch("/api/extract-text", {
         method: "POST",
         body: formData,
       });
 
       if (!response.ok) {
-        throw new Error("Network response was not ok");
+        const errorData = await response.json();
+        console.error('Server error:', errorData);
+        throw new Error(errorData.error || `Server error: ${response.status}`);
       }
 
       const { text: extractedText } = await response.json();
+      console.log('Received extracted text, length:', extractedText?.length);
+
+      if (!extractedText) {
+        throw new Error('No text was extracted from the PDF');
+      }
 
       setInitialText(extractedText);
       setShowChat(true);
     } catch (error) {
       console.error("Error processing resume:", error);
+      setError(error instanceof Error ? error.message : 'Failed to process resume');
     } finally {
       setIsLoading(false);
     }
@@ -82,46 +97,57 @@ const ResumeUploader = () => {
     e.preventDefault();
     e.stopPropagation();
     setIsDragging(false);
-    setIsLoading(true);
-    
-    const files = e.dataTransfer.files;
-    if (files.length > 0) {
-      await processFile(files[0]);
-    } else {
-      setIsLoading(false);
+
+    const file = e.dataTransfer.files[0];
+    if (file) {
+      await processFile(file);
     }
   };
 
   return (
-    <div>
-      <p className="instructions-text">
-        {!showChat
-          ? "Upload your resume to start the interview."
-          : "Answer Bob's questions using your microphone."}
-      </p>
+    <div className="flex flex-col items-center justify-center min-h-screen p-4">
       {!showChat ? (
-        <>
-          <div 
-            className={`file-upload-btn-container ${isDragging ? 'dragging' : ''}`}
-            onDragOver={handleDragOver}
-            onDragLeave={handleDragLeave}
-            onDrop={handleDrop}
-          >
-            <input
-              type="file"
-              id="file-upload"
-              onChange={handleResumeUpload}
-              accept="application/pdf"
-              hidden
-              ref={fileInputRef}
-            />
-            <label htmlFor="file-upload" className="file-upload-btn">
-              📄 {isDragging ? 'Drop Resume Here' : 'Upload Resume'}
-            </label>
-            <p className="drag-drop-hint">or drag and drop a PDF file here</p>
+        <div
+          className={`w-full max-w-2xl p-8 text-center border-2 border-dashed rounded-lg ${
+            isDragging ? "border-blue-500 bg-blue-50" : "border-gray-300"
+          }`}
+          onDragOver={handleDragOver}
+          onDragLeave={handleDragLeave}
+          onDrop={handleDrop}
+        >
+          <input
+            type="file"
+            ref={fileInputRef}
+            className="hidden"
+            accept=".pdf"
+            onChange={handleResumeUpload}
+          />
+          <div className="space-y-4">
+            <h1 className="text-3xl font-bold text-gray-900">
+              Upload Your Resume
+            </h1>
+            <p className="text-gray-600">
+              Drag and drop your PDF resume here, or click to select a file
+            </p>
+            <button
+              onClick={() => fileInputRef.current?.click()}
+              className="px-6 py-2 text-white bg-blue-600 rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+            >
+              Select File
+            </button>
+            {isLoading && (
+              <div className="mt-4">
+                <div className="w-8 h-8 mx-auto border-4 border-blue-600 rounded-full animate-spin border-t-transparent"></div>
+                <p className="mt-2 text-gray-600">Processing your resume...</p>
+              </div>
+            )}
+            {error && (
+              <div className="mt-4 p-4 text-red-700 bg-red-100 rounded-lg">
+                {error}
+              </div>
+            )}
           </div>
-          {isLoading && <div className="loading-spinner"></div>}
-        </>
+        </div>
       ) : (
         <AudioChat initialText={initialText} />
       )}

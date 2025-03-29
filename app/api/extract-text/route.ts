@@ -3,9 +3,6 @@ import * as pdfjs from 'pdfjs-dist/build/pdf.min.mjs';
 import type { TextContent, TextItem } from 'pdfjs-dist/types/src/display/api';
 import { NextResponse, NextRequest } from 'next/server';
 
-// Set up PDF.js worker
-pdfjs.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjs.version}/pdf.worker.min.js`;
-
 function mergeTextContent(textContent: TextContent) {
   return textContent.items.map(item => {
     const { str, hasEOL } = item as TextItem
@@ -64,6 +61,9 @@ export async function POST(req: NextRequest, res: NextResponse) {
   }
 
   try {
+    // Initialize PDF.js worker
+    await import('pdfjs-dist/build/pdf.worker.mjs');
+
     const formData = await req.formData();
     const [ file ] = formData.getAll('file') as unknown as File[];
 
@@ -72,8 +72,6 @@ export async function POST(req: NextRequest, res: NextResponse) {
         status: 400,
       });
     }
-
-    console.log('Processing file:', file.name, 'Size:', file.size);
 
     const fileBuffer = await file.arrayBuffer();
     const fileData = new Uint8Array(fileBuffer);
@@ -94,8 +92,6 @@ export async function POST(req: NextRequest, res: NextResponse) {
     const textContent = await page.getTextContent();
     const extractedText = mergeTextContent(textContent);
 
-    console.log('Extracted text length:', extractedText.length);
-
     // Send extracted resume text to openAI API to get the first question from the AI
     const openAIResponse = await fetchOpenAIResponse(extractedText);
 
@@ -106,11 +102,7 @@ export async function POST(req: NextRequest, res: NextResponse) {
     });
   } catch (err) {
     console.error('Error in extract-text:', err);
-    return new Response(JSON.stringify({ 
-      status: 'error', 
-      error: String(err),
-      stack: err instanceof Error ? err.stack : undefined
-    }), {
+    return new Response(JSON.stringify({ status: 'error', error: String(err) }), {
       status: 500,
       headers: {
         'Content-Type': 'application/json',
