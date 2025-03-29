@@ -40,6 +40,12 @@ const nextConfig = {
       },
     });
 
+    // Add rule for PDF.js
+    config.module.rules.push({
+      test: /pdfjs-dist/,
+      use: 'null-loader',
+    });
+
     return config;
   },
   experimental: {

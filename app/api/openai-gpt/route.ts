@@ -11,19 +11,15 @@ export const runtime = 'edge';
 
 export async function POST(req: Request) {
   try {
-    console.log('Received OpenAI request');
     const { messages } = await req.json();
-    console.log('Messages received:', messages.length);
 
     // If this is the first message (system message), don't send it to OpenAI
     if (messages.length === 1 && messages[0].role === 'system') {
-      console.log('Returning system message');
       return new Response(JSON.stringify({ message: messages[0].content }), {
         headers: { 'Content-Type': 'application/json' },
       });
     }
 
-    console.log('Creating OpenAI chat completion');
     const response = await openai.chat.completions.create({
       model: 'gpt-3.5-turbo',
       messages: [
@@ -52,7 +48,6 @@ export async function POST(req: Request) {
       stream: true,
     });
 
-    console.log('Creating stream from OpenAI response');
     // Create a stream of the response
     const stream = OpenAIStream(response, {
       onCompletion: async (completion: string) => {
@@ -68,14 +63,8 @@ export async function POST(req: Request) {
     return new StreamingTextResponse(stream);
   } catch (error) {
     console.error('Error in openai-gpt:', error);
-    const errorDetails = {
-      error: String(error),
-      message: error instanceof Error ? error.message : String(error),
-      stack: error instanceof Error ? error.stack : undefined,
-    };
-    console.error('Error details:', errorDetails);
     return new Response(
-      JSON.stringify(errorDetails),
+      JSON.stringify({ error: 'Failed to process request' }),
       { 
         status: 500,
         headers: { 'Content-Type': 'application/json' }
