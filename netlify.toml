@@ -13,17 +13,13 @@
   NEXT_IGNORE_ESLINT = "1"
   NEXT_IGNORE_TYPE_CHECKS = "1"
 
-[functions]
-  node_bundler = "esbuild"
-  included_files = ["public/*", ".next/static/*"]
+# No additional function configuration needed - the Next.js plugin handles this
+# [functions]
+#   node_bundler = "esbuild"
+#   included_files = ["public/*", ".next/static/*"]
 
-# For all routes
-[[redirects]]
-  from = "/*"
-  to = "/.netlify/functions/nextjs-server"
-  status = 200
-  force = true
-
+# The redirects are handled by the Next.js plugin
+# Keep the headers configuration
 [[headers]]
   for = "/*"
   [headers.values]

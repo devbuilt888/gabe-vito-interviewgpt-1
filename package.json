@@ -29,7 +29,6 @@
     "livekit-server-sdk": "^2.10.2",
     "next": "^15.2.4",
     "openai": "^4.24.2",
-    "pdfjs-dist": "^3.11.174",
     "postcss": "8.4.28",
     "react": "18.2.0",
     "react-chat-plugin": "^0.1.17",

@@ -53,15 +53,8 @@ const nextConfig = {
   images: {
     unoptimized: true,
   },
-  // Netlify-specific configuration
-  poweredByHeader: false,
-  compress: true,
-  generateEtags: true,
+  // Simplify Netlify-specific configuration
   output: 'standalone',
-  distDir: '.next',
-  // Remove these as they can cause issues with Netlify's handling of Next.js
-  trailingSlash: undefined,
-  basePath: '',
 }
 
 module.exports = nextConfig
