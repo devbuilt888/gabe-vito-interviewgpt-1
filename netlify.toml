@@ -13,13 +13,23 @@
   NEXT_IGNORE_ESLINT = "1"
   NEXT_IGNORE_TYPE_CHECKS = "1"
 
-# No additional function configuration needed - the Next.js plugin handles this
-# [functions]
-#   node_bundler = "esbuild"
-#   included_files = ["public/*", ".next/static/*"]
+# Explicitly define redirects for Next.js
+[[redirects]]
+  from = "/_next/*"
+  to = "/_next/:splat"
+  status = 200
 
-# The redirects are handled by the Next.js plugin
-# Keep the headers configuration
+[[redirects]]
+  from = "/api/*"
+  to = "/.netlify/functions/nextjs-server/api/:splat"
+  status = 200
+  force = true
+
+[[redirects]]
+  from = "/*"
+  to = "/.netlify/functions/nextjs-server"
+  status = 200
+
 [[headers]]
   for = "/*"
   [headers.values]

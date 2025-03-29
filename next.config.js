@@ -53,8 +53,12 @@ const nextConfig = {
   images: {
     unoptimized: true,
   },
-  // Simplify Netlify-specific configuration
+  // Critical Netlify-specific configuration
   output: 'standalone',
+  // The target is important for Netlify
+  target: process.env.NEXT_USE_NETLIFY_EDGE ? 'experimental-serverless-trace' : undefined,
+  // Enable Netlify-specific asset prefix - helps with routing
+  assetPrefix: process.env.NETLIFY ? '/_next' : undefined,
 }
 
 module.exports = nextConfig

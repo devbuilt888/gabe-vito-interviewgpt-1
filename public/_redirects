@@ -1,0 +1,4 @@
+# Redirect all requests to Next.js server
+/_next/*              /_next/:splat                       200
+/api/*                /.netlify/functions/nextjs-server/api/:splat  200!
+/*                    /.netlify/functions/nextjs-server   200 
