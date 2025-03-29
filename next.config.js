@@ -58,8 +58,9 @@ const nextConfig = {
   compress: true,
   generateEtags: true,
   output: 'standalone',
-  // This is critical for proper API routing on Netlify
-  trailingSlash: false,
+  distDir: '.next',
+  // Remove these as they can cause issues with Netlify's handling of Next.js
+  trailingSlash: undefined,
   basePath: '',
 }
 

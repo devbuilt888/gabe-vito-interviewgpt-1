@@ -1,8 +1,8 @@
 // import formidable from "formidable";
 import { NextResponse } from 'next/server';
 
-// Use Edge runtime for better performance on Netlify
-export const runtime = 'edge';
+// Use Node.js runtime instead of Edge for better compatibility with Netlify
+export const runtime = 'nodejs';
 export const maxDuration = 60;
 
 export async function POST(req: Request) {
@@ -26,7 +26,7 @@ export async function POST(req: Request) {
       console.log(`Processing binary data of size: ${binary.length}`);
       
       // Extract text from binary PDF data
-      // This is a simplified approach that works in Edge runtime
+      // This is a simplified approach that works in Node.js runtime
       let text = '';
       const excludeMarkers = ['/Font', '/XObject', '/Image', '/Page', '/Contents'];
       

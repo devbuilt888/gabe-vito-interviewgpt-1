@@ -1,0 +1,7 @@
+# Netlify redirects file
+
+# Serve all routes through the Next.js server
+/*  /.netlify/functions/nextjs-server  200
+
+# API routes through Next.js server
+/api/*  /.netlify/functions/nextjs-server  200 
