@@ -49,7 +49,7 @@ const nextConfig = {
     return config;
   },
   experimental: {
-    esmExternals: 'loose',
+    serverActions: true,
   },
   typescript: {
     ignoreBuildErrors: true,
