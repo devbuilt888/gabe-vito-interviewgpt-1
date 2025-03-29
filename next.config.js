@@ -34,8 +34,35 @@ const nextConfig = {
     // Handle PDF.js
     config.module.rules.push({
       test: /pdfjs-dist/,
-      use: 'null-loader',
+      use: [
+        {
+          loader: 'babel-loader',
+          options: {
+            presets: ['@babel/preset-env'],
+            plugins: ['@babel/plugin-transform-runtime'],
+          },
+        },
+      ],
     });
+
+    // Optimize PDF.js bundle
+    config.optimization = {
+      ...config.optimization,
+      splitChunks: {
+        ...config.optimization.splitChunks,
+        chunks: 'all',
+        minSize: 20000,
+        maxSize: 244000,
+        cacheGroups: {
+          pdfjs: {
+            test: /[\\/]node_modules[\\/]pdfjs-dist[\\/]/,
+            name: 'pdfjs',
+            chunks: 'all',
+            priority: 10,
+          },
+        },
+      },
+    };
 
     return config;
   },
