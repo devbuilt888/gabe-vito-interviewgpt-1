@@ -3,9 +3,6 @@ import { NextResponse } from 'next/server';
 import { getDocument } from 'pdfjs-dist';
 import type { TextContent, TextItem } from 'pdfjs-dist/types/src/display/api';
 
-// Initialize worker
-GlobalWorkerOptions.workerSrc = `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/${version}/pdf.worker.min.js`;
-
 export const runtime = 'edge';
 export const maxDuration = 60;
 

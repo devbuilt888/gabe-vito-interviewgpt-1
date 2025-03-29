@@ -31,13 +31,10 @@ const nextConfig = {
       use: 'null-loader',
     });
 
-    // Handle PDF.js worker
+    // Handle PDF.js
     config.module.rules.push({
-      test: /pdf\.worker\.(min\.)?js/,
-      type: 'asset/resource',
-      generator: {
-        filename: 'static/worker/[hash][ext][query]',
-      },
+      test: /pdfjs-dist/,
+      use: 'null-loader',
     });
 
     return config;
