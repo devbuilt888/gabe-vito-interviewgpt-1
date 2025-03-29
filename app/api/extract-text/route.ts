@@ -1,10 +1,10 @@
 // import formidable from "formidable";
-import { getDocument, GlobalWorkerOptions, version } from 'pdfjs-dist';
+import * as pdfjs from 'pdfjs-dist';
 import type { TextContent, TextItem } from 'pdfjs-dist/types/src/display/api';
 import { NextResponse, NextRequest } from 'next/server';
 
 // Set up PDF.js worker
-GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${version}/pdf.worker.min.js`;
+pdfjs.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjs.version}/pdf.worker.min.js`;
 
 function mergeTextContent(textContent: TextContent) {
   return textContent.items.map(item => {
@@ -79,7 +79,7 @@ export async function POST(req: NextRequest, res: NextResponse) {
     const fileData = new Uint8Array(fileBuffer);
 
     // Load the PDF from the buffer
-    const loadingTask = getDocument({ data: fileData });
+    const loadingTask = pdfjs.getDocument({ data: fileData });
     const pdf = await loadingTask.promise;
 
     if (!pdf.numPages) {
