@@ -1,78 +1,32 @@
 // import formidable from "formidable";
 import { NextResponse } from 'next/server';
-import * as pdfjsLib from 'pdfjs-dist/legacy/build/pdf';
-import type { TextContent, TextItem } from 'pdfjs-dist/types/src/display/api';
 
+// Use Edge runtime for better performance on Netlify
 export const runtime = 'edge';
 export const maxDuration = 60;
 
-function mergeTextContent(textContent: TextContent) {
-  return textContent.items.map(item => {
-    const { str, hasEOL } = item as TextItem
-    return str + (hasEOL ? '\n' : '')
-  }).join('')
-}
-
-async function fetchOpenAIResponse(extractedText: string) {
-  try {
-    const response = await fetch('/api/openai-gpt', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ messages: [{role: 'user', content: `Here is my resume:
-------
-${extractedText}` }]}),
-    });
-
-    if (!response.ok) {
-      throw new Error('Failed to fetch OpenAI response');
-    }
-
-    const reader = response.body?.getReader();
-    if (!reader) {
-      throw new Error('No response body');
-    }
-
-    let chunks = [];
-
-    // Read the stream
-    while (true) {
-      const { done, value } = await reader.read();
-      if (done) {
-        break;
-      }
-      chunks.push(value);
-    }
-
-    // Convert the Uint8Array chunks to string
-    const decoder = new TextDecoder('utf-8');
-    const text = chunks.map(chunk => decoder.decode(chunk)).join('');
-
-    return text;
-  } catch (error) {
-    console.error('Error in fetchOpenAIResponse:', error);
-    throw error;
-  }
-}
-
 export async function POST(req: Request) {
   try {
+    console.log('Extracting text from PDF...');
     const formData = await req.formData();
     const file = formData.get('file') as File;
     
     if (!file) {
+      console.log('No file provided');
       return NextResponse.json({ error: 'No file provided' }, { status: 400 });
     }
+
+    console.log(`File received: ${file.name}, type: ${file.type}, size: ${file.size}`);
 
     // For PDF files, we'll use a simplified approach for text extraction
     if (file.type === 'application/pdf') {
       const buffer = await file.arrayBuffer();
       const binary = new Uint8Array(buffer);
       
+      console.log(`Processing binary data of size: ${binary.length}`);
+      
       // Extract text from binary PDF data
-      // This is a simplified approach that won't work perfectly for all PDFs
-      // but will be compatible with Edge runtime
+      // This is a simplified approach that works in Edge runtime
       let text = '';
       const excludeMarkers = ['/Font', '/XObject', '/Image', '/Page', '/Contents'];
       
@@ -103,6 +57,7 @@ export async function POST(req: Request) {
       
       // Fall back to any text in parentheses if nothing found
       if (text.trim() === '') {
+        console.log('No text found with primary patterns, trying fallback...');
         const parensRegex = /\(([^\)]+)\)/g;
         while ((match = parensRegex.exec(content)) !== null) {
           if (match && match[1]) {
@@ -125,18 +80,20 @@ export async function POST(req: Request) {
         .replace(/\\/g, '')
         .replace(/\s+/g, ' ');
       
+      console.log(`Extracted text length: ${text.length}`);
       return NextResponse.json({ text }, { status: 200 });
     }
     
     // For other file types, just return an error
+    console.log(`Unsupported file type: ${file.type}`);
     return NextResponse.json(
-      { error: 'Unsupported file type' },
+      { error: `Unsupported file type: ${file.type}` },
       { status: 400 }
     );
   } catch (error) {
     console.error('File extraction error:', error);
     return NextResponse.json(
-      { error: 'Failed to extract text from file' },
+      { error: `Failed to extract text from file: ${error instanceof Error ? error.message : String(error)}` },
       { status: 500 }
     );
   }

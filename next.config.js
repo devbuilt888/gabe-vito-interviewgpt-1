@@ -31,6 +31,12 @@ const nextConfig = {
       use: 'null-loader',
     });
 
+    // Handle PDF.js in a Netlify-compatible way
+    config.module.rules.push({
+      test: /pdfjs-dist/,
+      use: 'null-loader',
+    });
+
     return config;
   },
   experimental: {
@@ -47,11 +53,14 @@ const nextConfig = {
   images: {
     unoptimized: true,
   },
-  // Add Netlify-specific configuration
+  // Netlify-specific configuration
   poweredByHeader: false,
   compress: true,
   generateEtags: true,
   output: 'standalone',
+  // This is critical for proper API routing on Netlify
+  trailingSlash: false,
+  basePath: '',
 }
 
 module.exports = nextConfig

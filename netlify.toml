@@ -15,17 +15,21 @@
 
 [functions]
   node_bundler = "esbuild"
+  external_node_modules = ["pdfjs-dist"]
 
+# Don't redirect API requests to index.html
 [[redirects]]
   from = "/api/*"
-  to = "/.netlify/functions/:splat"
+  to = "/.netlify/functions/nextjs-server"
   status = 200
   force = true
 
+# For all page routes, serve index.html 
 [[redirects]]
   from = "/*"
-  to = "/index.html"
   status = 200
+  to = "/.netlify/functions/nextjs-server"
+  force = true
 
 [[headers]]
   for = "/*"
