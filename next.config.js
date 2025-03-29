@@ -31,9 +31,9 @@ const nextConfig = {
       use: 'null-loader',
     });
 
-    // Handle PDF.js
+    // Handle PDF.js legacy build
     config.module.rules.push({
-      test: /pdfjs-dist/,
+      test: /pdfjs-dist\/legacy\/build\/pdf/,
       use: [
         {
           loader: 'babel-loader',

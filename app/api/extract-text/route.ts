@@ -1,6 +1,6 @@
 // import formidable from "formidable";
 import { NextResponse } from 'next/server';
-import { getDocument } from 'pdfjs-dist';
+import * as pdfjsLib from 'pdfjs-dist/legacy/build/pdf';
 import type { TextContent, TextItem } from 'pdfjs-dist/types/src/display/api';
 
 export const runtime = 'edge';
@@ -68,7 +68,7 @@ export async function POST(req: Request) {
     const buffer = await file.arrayBuffer();
     const uint8Array = new Uint8Array(buffer);
 
-    const loadingTask = getDocument({ data: uint8Array });
+    const loadingTask = pdfjsLib.getDocument({ data: uint8Array });
     const pdf = await loadingTask.promise;
 
     let fullText = '';
