@@ -31,39 +31,6 @@ const nextConfig = {
       use: 'null-loader',
     });
 
-    // Handle PDF.js legacy build
-    config.module.rules.push({
-      test: /pdfjs-dist\/legacy\/build\/pdf/,
-      use: [
-        {
-          loader: 'babel-loader',
-          options: {
-            presets: ['@babel/preset-env'],
-            plugins: ['@babel/plugin-transform-runtime'],
-          },
-        },
-      ],
-    });
-
-    // Optimize PDF.js bundle
-    config.optimization = {
-      ...config.optimization,
-      splitChunks: {
-        ...config.optimization.splitChunks,
-        chunks: 'all',
-        minSize: 20000,
-        maxSize: 244000,
-        cacheGroups: {
-          pdfjs: {
-            test: /[\\/]node_modules[\\/]pdfjs-dist[\\/]/,
-            name: 'pdfjs',
-            chunks: 'all',
-            priority: 10,
-          },
-        },
-      },
-    };
-
     return config;
   },
   experimental: {

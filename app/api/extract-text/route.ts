@@ -65,25 +65,78 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: 'No file provided' }, { status: 400 });
     }
 
-    const buffer = await file.arrayBuffer();
-    const uint8Array = new Uint8Array(buffer);
-
-    const loadingTask = pdfjsLib.getDocument({ data: uint8Array });
-    const pdf = await loadingTask.promise;
-
-    let fullText = '';
-    for (let i = 1; i <= pdf.numPages; i++) {
-      const page = await pdf.getPage(i);
-      const content = await page.getTextContent();
-      const strings = content.items.map((item: any) => item.str);
-      fullText += strings.join(' ') + '\n';
+    // For PDF files, we'll use a simplified approach for text extraction
+    if (file.type === 'application/pdf') {
+      const buffer = await file.arrayBuffer();
+      const binary = new Uint8Array(buffer);
+      
+      // Extract text from binary PDF data
+      // This is a simplified approach that won't work perfectly for all PDFs
+      // but will be compatible with Edge runtime
+      let text = '';
+      const excludeMarkers = ['/Font', '/XObject', '/Image', '/Page', '/Contents'];
+      
+      // Convert binary to string for simple text extraction
+      const content = Array.from(binary)
+        .map(b => String.fromCharCode(b))
+        .join('');
+      
+      // Simple regex to extract text between parentheses after text markers
+      const regex = /\/Text[^(]*\(([^)]+)\)/g;
+      const regex2 = /\/T[^(]*\(([^)]+)\)/g;
+      
+      let match: RegExpExecArray | null;
+      
+      // Extract text using the first regex pattern
+      while ((match = regex.exec(content)) !== null) {
+        if (match && match[1]) {
+          text += match[1] + ' ';
+        }
+      }
+      
+      // Extract text using the second regex pattern
+      while ((match = regex2.exec(content)) !== null) {
+        if (match && match[1]) {
+          text += match[1] + ' ';
+        }
+      }
+      
+      // Fall back to any text in parentheses if nothing found
+      if (text.trim() === '') {
+        const parensRegex = /\(([^\)]+)\)/g;
+        while ((match = parensRegex.exec(content)) !== null) {
+          if (match && match[1]) {
+            // Check if this might be text and not metadata
+            const isMaybeText = match[1].length > 2 && 
+              !excludeMarkers.some(marker => match[1].includes(marker));
+            
+            if (isMaybeText) {
+              text += match[1] + ' ';
+            }
+          }
+        }
+      }
+      
+      // Clean up text
+      text = text
+        .replace(/\\n/g, '\n')
+        .replace(/\\r/g, '')
+        .replace(/\\\\/g, '\\')
+        .replace(/\\/g, '')
+        .replace(/\s+/g, ' ');
+      
+      return NextResponse.json({ text }, { status: 200 });
     }
-
-    return NextResponse.json({ text: fullText }, { status: 200 });
-  } catch (error) {
-    console.error('PDF extraction error:', error);
+    
+    // For other file types, just return an error
     return NextResponse.json(
-      { error: 'Failed to extract text from PDF' },
+      { error: 'Unsupported file type' },
+      { status: 400 }
+    );
+  } catch (error) {
+    console.error('File extraction error:', error);
+    return NextResponse.json(
+      { error: 'Failed to extract text from file' },
       { status: 500 }
     );
   }
